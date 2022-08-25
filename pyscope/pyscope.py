@@ -1,15 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
 from enum import Enum
+from os import getenv
+
 try:
    from account import GSAccount
 except ModuleNotFoundError:
    from .account import GSAccount
 
 try:
-   from course import GSCourse
+   from course import GSCourse, LoadedCapabilities
 except ModuleNotFoundError:
-   from .course import GSCourse
+   from .course import GSCourse, LoadedCapabilities
 
 class ConnState(Enum):
     INIT = 0
@@ -23,6 +25,9 @@ class GSConnection():
         self.session = requests.Session()
         self.state = ConnState.INIT
         self.account = None
+
+        # fake the user agent
+        self.session.headers.update({ 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0' })
 
     def login(self, email, pswd):
         '''
@@ -83,23 +88,16 @@ class GSConnection():
                 return False # Should probably raise an exception.
             self.account.add_class(cid, name, shortname, year, instructor = True)
 
-        student_courses = parsed_account_resp.find('h1', class_ ='pageHeading', string = "Student Courses").next_sibling
-        for course in student_courses.find_all('a', class_ = 'courseBox'):
-            shortname = course.find('h3', class_ = 'courseBox--shortname').text
-            name = course.find('h4', class_ = 'courseBox--name').text
-            cid = course.get("href").split("/")[-1]
-            
-            for tag in course.parent.previous_siblings:
-                if tag.get("class") == "courseList--term pageSubheading":
-                    year = tag.body
-                    break
-            if year is None:
-                return False # Should probably raise an exception.
-            self.account.add_class(cid, name, shortname, year)
-
 # THIS IS STRICTLY FOR DEVELOPMENT TESTING :( Sorry for leaving it in.
 if __name__=="__main__":
     conn = GSConnection()
-    conn.login("email", "password")
+    print(conn.login(getenv("STANFORD_GRADESCOPE_USER"), getenv("STANFORD_GRADESCOPE_PASSWORD")))
     print(conn.state)
-    conn.get_account()
+    print(conn.get_account())
+    xcs251sandbox_it = filter(lambda c: c.name == getenv("STANFORD_GRADESCOPE_COURSE_NAME") and c.shortname == getenv("STANFORD_GRADESCOPE_COURSE_SHORTNAME"), conn.account.instructor_courses.values())
+    xcs251sandbox = list(xcs251sandbox_it)[0]
+    xcs251sandbox._check_capabilities({LoadedCapabilities.ASSIGNMENTS})
+
+    project2_it = filter(lambda p: p.name == getenv("STANFORD_GRADESCOPE_ASSIGNMENT_NAME"), xcs251sandbox.assignments.values())
+    project2 = list(project2_it)[0];
+    print(project2.configure_autograder())

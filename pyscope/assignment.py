@@ -5,6 +5,9 @@ try:
 except ModuleNotFoundError:
    from .question import GSQuestion
 import json
+from random import randint
+from os import getenv
+import logging
 
 class GSAssignment():
 
@@ -18,6 +21,62 @@ class GSAssignment():
         self.regrades_on = regrades_on
         self.course = course
         self.questions = []
+
+    def configure_autograder(self):
+        autograder_config = self.course.session.get('https://www.gradescope.com/courses/' + self.course.cid +
+                                               '/assignments/' + self.aid + '/configure_autograder')
+        autograder_config_resp = BeautifulSoup(autograder_config.text, 'html.parser')
+        autograder_form =autograder_config_resp.find('form', attrs = { 'class': 'js-autograderForm'
+        })
+        authenticity_token = autograder_form.find('input', attrs={ 'name': 'authenticity_token' }).get('value')
+        boundary_suffix = str(randint(10000000000000000000000000000, 99999999999999999999999999999))
+        boundary = f"---------------------------{boundary_suffix}"
+        docker_tag = getenv("STANFORD_AUTOGRADER_IMAGE_TAG", "2.0.10")
+        docker_image = getenv("STANFORD_AUTOGRADER_IMAGE_NAME", "loeper/autograder-xcs251")
+        body = f"""{boundary}
+Content-Disposition: form-data; name="utf8"
+
+✓
+--{boundary}
+Content-Disposition: form-data; name="_method"
+
+patch
+--{boundary}
+Content-Disposition: form-data; name="authenticity_token"
+
+{authenticity_token}
+--{boundary}
+Content-Disposition: form-data; name="configuration"
+
+manual
+--{boundary}
+Content-Disposition: form-data; name="autograder_zip"; filename=""
+Content-Type: application/octet-stream
+
+
+--{boundary}
+Content-Disposition: form-data; name="base_image_id"
+
+3
+--{boundary}
+Content-Disposition: form-data; name="assignment[image_name]"
+
+{docker_image}:{docker_tag}
+--{boundary}--
+"""
+        lines = body.split("\n")
+        url = f'https://www.gradescope.com/courses/{self.course.cid}/assignments/{self.aid}/'
+        autograder_conf_post = self.course.session.post(
+            url,
+            data = "\r\n".join(lines).encode('utf-8'),
+            headers = {
+                'Content-Type': f'multipart/form-data; charset=utf-8; boundary={boundary}'.encode('utf-8'),
+#                'Referer': url,
+#                'Origin': 'https://www.gradescope.com',
+#                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+            }
+        )
+        print(autograder_conf_post.raise_for_status())
 
     def add_question(self, title, weight, crop = None, content = [], parent_id = None):
         new_q_data = [q.to_patch() for q in self.questions]
