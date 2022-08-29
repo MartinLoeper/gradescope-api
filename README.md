@@ -24,3 +24,10 @@ to activate it you can call the following:
 session.login('my@email.com', 'my_password')
 ```
 
+### Scripts
+
+In order to execute the script locally, do the following:
+
+- copy the `.env.example` to `.env` and fill in the variables
+- run the following using bash: `source scripts/source-env.sh`
+- run : `python3 pyscope/pyscope.py`

@@ -91,13 +91,24 @@ class GSConnection():
 # THIS IS STRICTLY FOR DEVELOPMENT TESTING :( Sorry for leaving it in.
 if __name__=="__main__":
     conn = GSConnection()
+
     print(conn.login(getenv("STANFORD_GRADESCOPE_USER"), getenv("STANFORD_GRADESCOPE_PASSWORD")))
     print(conn.state)
     print(conn.get_account())
-    xcs251sandbox_it = filter(lambda c: c.name == getenv("STANFORD_GRADESCOPE_COURSE_NAME") and c.shortname == getenv("STANFORD_GRADESCOPE_COURSE_SHORTNAME"), conn.account.instructor_courses.values())
-    xcs251sandbox = list(xcs251sandbox_it)[0]
-    xcs251sandbox._check_capabilities({LoadedCapabilities.ASSIGNMENTS})
 
-    project2_it = filter(lambda p: p.name == getenv("STANFORD_GRADESCOPE_ASSIGNMENT_NAME"), xcs251sandbox.assignments.values())
-    project2 = list(project2_it)[0];
-    print(project2.configure_autograder())
+    course_it = filter(lambda c: c.name == getenv("STANFORD_GRADESCOPE_COURSE_NAME") and c.shortname == getenv("STANFORD_GRADESCOPE_COURSE_SHORTNAME"), conn.account.instructor_courses.values())
+    course_list = list(course_it)
+    if len(course_list) != 1:
+        raise f"Found {len(course_list)} courses instead of exactly one."
+
+    course = course_list[0]
+    course._check_capabilities({LoadedCapabilities.ASSIGNMENTS})
+
+    project_it = filter(lambda p: p.name == getenv("STANFORD_GRADESCOPE_ASSIGNMENT_NAME"), course.assignments.values())
+    project_list = list(project_it)
+    if len(project_list) != 1:
+        raise f"Found {len(project_list)} projects instead of exactly one."
+
+    project = project_list[0]
+    project.configure_autograder()
+    project.check_gradescope_autograder_image(getenv("STANFORD_AUTOGRADER_IMAGE_NAME"), getenv("STANFORD_AUTOGRADER_IMAGE_TAG"))

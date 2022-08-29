@@ -22,6 +22,18 @@ class GSAssignment():
         self.course = course
         self.questions = []
 
+    def check_gradescope_autograder_image(self, expected_image, expected_tag):
+        autograder_config = self.course.session.get('https://www.gradescope.com/courses/' + self.course.cid +
+                                               '/assignments/' + self.aid + '/configure_autograder')
+        autograder_config_resp = BeautifulSoup(autograder_config.text, 'html.parser')
+        autograder_form =autograder_config_resp.find('form', attrs = { 'class': 'js-autograderForm'
+        })
+        current_image_name_and_tag = autograder_form.find('input', attrs={ 'name': 'assignment[image_name]' }).get('value')
+        expected_image_and_tag = expected_image + ":" + expected_tag
+        if (expected_image_and_tag != current_image_name_and_tag):
+            raise f"The image was not changed as expected: {expected_image_and_tag} != {current_image_name_and_tag}."
+        
+
     def configure_autograder(self):
         autograder_config = self.course.session.get('https://www.gradescope.com/courses/' + self.course.cid +
                                                '/assignments/' + self.aid + '/configure_autograder')
@@ -77,6 +89,7 @@ Content-Disposition: form-data; name="assignment[image_name]"
             }
         )
         print(autograder_conf_post.raise_for_status())
+
 
     def add_question(self, title, weight, crop = None, content = [], parent_id = None):
         new_q_data = [q.to_patch() for q in self.questions]
