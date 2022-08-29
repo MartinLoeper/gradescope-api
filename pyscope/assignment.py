@@ -31,7 +31,7 @@ class GSAssignment():
         current_image_name_and_tag = autograder_form.find('input', attrs={ 'name': 'assignment[image_name]' }).get('value')
         expected_image_and_tag = expected_image + ":" + expected_tag
         if (expected_image_and_tag != current_image_name_and_tag):
-            raise f"The image was not changed as expected: {expected_image_and_tag} != {current_image_name_and_tag}."
+            raise Exception(f"The image was not changed as expected: {expected_image_and_tag} != {current_image_name_and_tag}.")
         
 
     def configure_autograder(self):

@@ -99,7 +99,7 @@ if __name__=="__main__":
     course_it = filter(lambda c: c.name == getenv("STANFORD_GRADESCOPE_COURSE_NAME") and c.shortname == getenv("STANFORD_GRADESCOPE_COURSE_SHORTNAME"), conn.account.instructor_courses.values())
     course_list = list(course_it)
     if len(course_list) != 1:
-        raise f"Found {len(course_list)} courses instead of exactly one."
+        raise Exception(f"Found {len(course_list)} courses instead of exactly one.")
 
     course = course_list[0]
     course._check_capabilities({LoadedCapabilities.ASSIGNMENTS})
@@ -107,7 +107,7 @@ if __name__=="__main__":
     project_it = filter(lambda p: p.name == getenv("STANFORD_GRADESCOPE_ASSIGNMENT_NAME"), course.assignments.values())
     project_list = list(project_it)
     if len(project_list) != 1:
-        raise f"Found {len(project_list)} projects instead of exactly one."
+        raise Exception(f"Found {len(project_list)} projects instead of exactly one.")
 
     project = project_list[0]
     project.configure_autograder()
