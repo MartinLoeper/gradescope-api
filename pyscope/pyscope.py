@@ -72,7 +72,7 @@ class GSConnection():
         parsed_account_resp = BeautifulSoup(account_resp.text, 'html.parser')
 
         # Get instructor course data
-        instructor_courses = parsed_account_resp.find('h1', class_ ='pageHeading').next_sibling
+        instructor_courses = parsed_account_resp.find('h1', class_ ='pageHeading').findNext("div", attrs={ "class": "courseList" })
         
         for course in instructor_courses.find_all('a', class_ = 'courseBox'):
             shortname = course.find('h3', class_ = 'courseBox--shortname').text
