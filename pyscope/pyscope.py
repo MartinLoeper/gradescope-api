@@ -94,6 +94,9 @@ if __name__=="__main__":
 
     print(conn.login(getenv("STANFORD_GRADESCOPE_USER"), getenv("STANFORD_GRADESCOPE_PASSWORD")))
     print(conn.state)
+    if conn.state != ConnState.LOGGED_IN:
+        raise Exception(f"Your connection state is {conn.state} instead of {ConnState.LOGGED_IN}.")
+
     print(conn.get_account())
 
     course_it = filter(lambda c: c.name == getenv("STANFORD_GRADESCOPE_COURSE_NAME") and c.shortname == getenv("STANFORD_GRADESCOPE_COURSE_SHORTNAME"), conn.account.instructor_courses.values())
