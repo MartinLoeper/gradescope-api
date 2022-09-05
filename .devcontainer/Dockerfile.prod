@@ -1,0 +1,13 @@
+# syntax = loeper/dockerfile-plus
+FROM python:3.10-buster
+
+INCLUDE+ ./.devcontainer/Dockerfile.deps
+
+ENV WORKDIR /usr/share/gradescope-api
+
+WORKDIR ${WORKDIR}
+RUN mkdir -p "${WORKDIR}/pyscope"
+COPY "pyscope/" "${WORKDIR}/pyscope"
+
+ENTRYPOINT ["/usr/local/bin/python3"]
+CMD ["./pyscope/pyscope.py"]

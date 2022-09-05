@@ -1,0 +1,3 @@
+# syntax = loeper/dockerfile-plus
+
+RUN pip3 --disable-pip-version-check --no-cache-dir install bs4 requests
