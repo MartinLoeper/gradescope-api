@@ -10,6 +10,7 @@ try:
    from assignment import GSAssignment
 except ModuleNotFoundError:
    from .assignment import GSAssignment
+import json
 
 
 class LoadedCapabilities(Enum):
@@ -165,24 +166,21 @@ class GSCourse():
         assignment_resp = self.session.get('https://www.gradescope.com/courses/'+self.cid+'/assignments')
         parsed_assignment_resp = BeautifulSoup(assignment_resp.text, 'html.parser')
         
-        assignment_table = []
-        for assignment_row in parsed_assignment_resp.findAll('tr', class_ = 'js-assignmentTableAssignmentRow'):
-            row = []
-            for td in assignment_row.findAll('td'):
-                row.append(td)
-            assignment_table.append(row)
-        
+        reactDiv = parsed_assignment_resp.find('div', attrs = {'data-react-class': 'AssignmentsTable'})
+        reactProps = reactDiv.get('data-react-props')
+        reactProps = json.loads(reactProps)
+        assignment_table = reactProps['table_data']
         for row in assignment_table:
-            name = row[0].text
-            aid = row[0].find('a').get('href').rsplit('/',1)[1]
-            points = row[1].text
-            # TODO: (released,due) = parse(row[2])
-            submissions = row[3].text
-            percent_graded = row[4].text
-            complete = True if 'workflowCheck-complete' in row[5].get('class') else False
-            regrades_on  = False if row[6].text == 'OFF' else True
+            name = row['title']
+            aid = row['id'].rsplit('_',1)[1]
+            points = row['total_points']
+            submissions = row['num_active_submissions']
+            percent_graded = row['grading_progress']
+            complete = True if row['grading_progress'] == 100 else False
+            regrades_on  = True if row['regrade_requests_open'] else False
             # TODO make these types reasonable
             self.assignments[name] = GSAssignment(name, aid, points, percent_graded, complete, regrades_on, self)
+
         self.state.add(LoadedCapabilities.ASSIGNMENTS)
         pass
 
