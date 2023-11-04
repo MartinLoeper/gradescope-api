@@ -76,7 +76,7 @@ class GSConnection():
         
         for course in instructor_courses.find_all('a', class_ = 'courseBox'):
             shortname = course.find('h3', class_ = 'courseBox--shortname').text
-            name = course.find('h4', class_ = 'courseBox--name').text
+            name = course.find('div', class_ = 'courseBox--name').text
             cid = course.get("href").split("/")[-1]
             year = None
             print(cid, name, shortname)
